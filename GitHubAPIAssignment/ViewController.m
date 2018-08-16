@@ -7,8 +7,11 @@
 //
 
 #import "ViewController.h"
+#import "Repo.h"
 
-@interface ViewController ()
+@interface ViewController () <UITableViewDataSource>
+@property (nonatomic) NSMutableArray <Repo *> *repoNames;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
 
 @end
 
@@ -16,6 +19,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    _repoNames = [@[] mutableCopy];
     NSURL *url = [NSURL URLWithString:@"https://api.github.com/users/rusevine/repos"]; // 1
     NSURLRequest *urlRequest = [[NSURLRequest alloc] initWithURL:url]; // 2
     
@@ -38,14 +42,14 @@
                 NSLog(@"jsonError: %@", jsonError.localizedDescription);
                 return;
             }
-            
-   
+        
             for (NSDictionary *repo in repos) {
-                
-                NSString *repoName = repo[@"name"];
-                NSLog(@"repo: %@", repoName);
+                Repo *repository = [[Repo alloc] initWithRepo:repo];
+                [self.repoNames addObject:repository];
             }
-      
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [self.tableView reloadData];
+        }];
         
     }]; // 5
     
@@ -58,5 +62,18 @@
     // Dispose of any resources that can be recreated.
 }
 
+
+
+
+- (NSInteger)tableView:(nonnull UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return self.repoNames.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell"];
+    cell.textLabel.text = self.repoNames[indexPath.row].name;
+    
+    return cell;
+}
 
 @end
